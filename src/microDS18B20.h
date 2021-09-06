@@ -183,9 +183,10 @@ public:
     }
     
     // Прочитать "сырое" значение температуры
+    // Возвращает: температуру в сыром виде, в случае ошибки значение -127
     uint16_t getRaw(void) {
         uint8_t _calculated_crc = 0;                // Переменная для хранения CRC
-        if (oneWire_reset(DS_PIN)) return 0;        // Проверка присутствия
+        if (oneWire_reset(DS_PIN)) return -127;     // Проверка присутствия
         addressRoutine();                   		// Процедура адресации
         oneWire_write(0xBE, DS_PIN);                // Запросить температуру
 #if (DS_CHECK_CRC == true)                          // Если требуется проверка подлинности
@@ -194,7 +195,7 @@ public:
             data[i] = oneWire_read(DS_PIN);         // Прочитать данные
             _ds_crc8_upd(_calculated_crc, data[i]); // Обновить значение CRC8
         }
-        if (_calculated_crc) return 0;              // Если CRC не сошелся - данные в помойку
+        if (_calculated_crc) return -127;           // Если CRC не сошелся - данные в помойку
 #else                                               // Если пропуск проверки CRC
         uint8_t data[2];                            // Временный массив для данных (2 байта)
         data[0] = oneWire_read(DS_PIN);             // Прочитать младший байт температуры
@@ -205,6 +206,9 @@ public:
 
     // Преобразовать "сырое" значение в температуру
     DS_TEMP_TYPE calcRaw(uint16_t data) {
+        if (data & 0x8000) {                        // Для отрицательных температур расчет происходит немного подругому
+             return (DS_TEMP_TYPE) ((data ^ 0xffff) + 1) * -0.1;
+        }
         return ((DS_TEMP_TYPE)data / 16);           // Рассчитать значение температуры
     }
     
