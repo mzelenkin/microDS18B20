@@ -132,8 +132,18 @@ float DS_rawToFloat(uint16_t data) {
 }
 
 // ============================================================================
+// Интерфейс для удобной ссылки на экземпляры класса
+class IDS18b20 {
+  public:
+    virtual bool setResolution(uint8_t resolution);
+    virtual void readAddress(uint8_t *addressArray);
+    virtual void requestTemp(void);
+    virtual DS_TEMP_TYPE getTemp(void);
+};
+
+// ============================================================================
 template <uint8_t DS_PIN, uint8_t *DS_ADDR = nullptr>
-class MicroDS18B20 {
+class MicroDS18B20 : public IDS18b20 {
 public:
     MicroDS18B20(uint8_t * addr = nullptr) {
         pinMode(DS_PIN, INPUT);
